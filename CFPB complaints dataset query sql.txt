@@ -1,0 +1,38 @@
+SELECT 
+    date_received,
+    product,
+    subproduct,
+    issue,
+    subissue,
+    company_public_response,
+    company_name,
+    complaints.state,
+    cen_zip.geo_id AS zip_code,
+    tags,
+    submitted_via,
+    date_sent_to_company,
+    company_response_to_consumer,
+    timely_response,
+    complaint_id,
+    zip.state_name,
+    cen_zip.total_pop AS zip_code_population,
+    cen_state.total_pop AS state_population,
+    ROUND(cen_zip.median_income, 0) AS median_income_zip_code,
+    ROUND(cen_state.median_income, 0) AS median_income_state
+FROM (
+    SELECT *,
+    LEFT(REGEXP_REPLACE(zip_code, r'[^0-9]', ''), 5) AS zip_code_clean
+    FROM `bigquery-public-data.cfpb_complaints.complaint_database`
+) complaints
+LEFT JOIN
+    `bigquery-public-data.census_bureau_acs.zip_codes_2018_5yr` cen_zip
+ON
+    complaints.zip_code_clean = cen_zip.geo_id
+LEFT JOIN
+    `bigquery-public-data.geo_us_boundaries.zip_codes` zip
+ON
+    complaints.zip_code_clean = zip.zip_code
+LEFT JOIN
+    `bigquery-public-data.census_bureau_acs.state_2018_5yr` cen_state
+ON 
+    zip.state_fips_code = cen_state.geo_id;
